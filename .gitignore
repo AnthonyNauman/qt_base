@@ -1,0 +1,41 @@
+# .gitignore
+# Docker
+*.log
+*.pid
+*.docker
+.DS_Store
+.dockerignore
+.dockerenv
+
+# Build directories
+build/
+build*/
+*-build/
+cmake-build-*/
+install/
+archive/
+artifacts/
+
+# Output directories
+output/
+*.out
+*.app
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Compiled files
+*.o
+*.so
+*.so.*
+*.a
+*.dll
+*.dylib
+*.exe
+*.out
+*.app

@@ -1,0 +1,186 @@
+# Dockerfile.qt-base
+FROM ubuntu:24.04 AS qt-builder
+LABEL description="Base image with Qt 5.15.17 compiled from source for Linux and Windows"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV QT_VERSION=5.15.17
+ENV QT_INSTALL_DIR=/opt/qt
+ENV QT_LINUX_DIR=${QT_INSTALL_DIR}/linux/${QT_VERSION}
+ENV QT_WINDOWS_DIR=${QT_INSTALL_DIR}/windows/${QT_VERSION}
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    python3 \
+    python3-pip \
+    perl \
+    pkg-config \
+    mingw-w64 \
+    mingw-w64-common \
+    mingw-w64-tools \
+    mingw-w64-x86-64-dev \
+    gcc-mingw-w64 \
+    g++-mingw-w64 \
+    binutils-mingw-w64 \
+    autoconf \
+    automake \
+    libtool \
+    flex \
+    bison \
+    libxcb-xinerama0-dev \
+    libxcb-icccm4-dev \
+    libxcb-image0-dev \
+    libxcb-keysyms1-dev \
+    libxcb-randr0-dev \
+    libxcb-render-util0-dev \
+    libxcb-shape0-dev \
+    libxcb-sync-dev \
+    libxcb-xfixes0-dev \
+    libxcb-xkb-dev \
+    libxcb-xv0-dev \
+    libx11-dev \
+    libx11-xcb-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev \
+    libgl1-mesa-dev \
+    libglu1-mesa-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libtiff-dev \
+    libicu-dev \
+    libssl-dev \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix && \
+    update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+WORKDIR /opt/build
+RUN git clone --branch ${QT_VERSION} --depth 1 https://github.com/qtproject/qt5.git qt5 && \
+    cd qt5 && \
+    perl init-repository --module-subset=qtbase,qttools,qttranslations,qtdeclarative,qtserialport
+
+WORKDIR /opt/build/qt5
+RUN mkdir -p build-linux && cd build-linux && \
+    ../configure \
+    -prefix ${QT_LINUX_DIR} \
+    -release \
+    -opensource \
+    -confirm-license \
+    -nomake examples \
+    -nomake tests \
+    -no-opengl \
+    -no-gtk \
+    -qt-libpng \
+    -qt-libjpeg \
+    -qt-freetype \
+    -qt-pcre \
+    -qt-harfbuzz \
+    -static \
+    -skip qtwebengine \
+    -skip qtwebview \
+    -skip qtlocation \
+    -skip qtwayland \
+    -skip qt3d \
+    -skip qtsensors \
+    -skip qtconnectivity \
+    -skip qtserialbus \
+    && make -j$(nproc) \
+    && make install
+
+RUN rm -rf /opt/build/qt5/build-linux
+
+WORKDIR /opt/build/qt5
+RUN mkdir -p build-windows && cd build-windows && \
+    ../configure \
+    -prefix ${QT_WINDOWS_DIR} \
+    -xplatform win32-g++ \
+    -device-option CROSS_COMPILE=x86_64-w64-mingw32- \
+    -release \
+    -opensource \
+    -confirm-license \
+    -nomake examples \
+    -nomake tests \
+    -no-opengl \
+    -qt-libpng \
+    -qt-libjpeg \
+    -qt-freetype \
+    -qt-pcre \
+    -qt-harfbuzz \
+    -static \
+    -skip qtwebengine \
+    -skip qtwebview \
+    -skip qtlocation \
+    -skip qtwayland \
+    -skip qt3d \
+    -skip qtsensors \
+    -skip qtconnectivity \
+    -skip qtserialbus \
+    -skip qtdeclarative \
+    -skip qttools \
+    -skip qttranslations \
+    -no-dbus \
+    && make -j$(nproc) \
+    && make install
+
+RUN rm -rf /opt/build/qt5/build-windows
+
+WORKDIR /opt
+RUN rm -rf /opt/build
+
+FROM ubuntu:24.04
+LABEL description="Runtime base image with Qt 5.15.17 for Linux and Windows cross-compilation"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV QT_VERSION=5.15.17
+ENV QT_INSTALL_DIR=/opt/qt
+ENV QT_LINUX_DIR=${QT_INSTALL_DIR}/linux/${QT_VERSION}
+ENV QT_WINDOWS_DIR=${QT_INSTALL_DIR}/windows/${QT_VERSION}
+
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglx-mesa0 \
+    libfontconfig1 \
+    libfreetype6 \
+    libxcb-xinerama0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-sync1 \
+    libxcb-xfixes0 \
+    libxcb-xkb1 \
+    libxkbcommon-x11-0 \
+    libxkbcommon0 \
+    libdbus-1-3 \
+    libicu74 \
+    libssl3 \
+    libsqlite3-0 \
+    libpulse0 \
+    libasound2t64 \
+    zlib1g \
+    # cross-compilation
+    mingw-w64 \
+    mingw-w64-tools \
+    cmake \
+    make \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix && \
+    update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+COPY --from=qt-builder ${QT_LINUX_DIR} ${QT_LINUX_DIR}
+COPY --from=qt-builder ${QT_WINDOWS_DIR} ${QT_WINDOWS_DIR}
+
+RUN ln -s ${QT_LINUX_DIR} ${QT_INSTALL_DIR}/linux/latest && \
+    ln -s ${QT_WINDOWS_DIR} ${QT_INSTALL_DIR}/windows/latest
+
+WORKDIR ${QT_INSTALL_DIR}
+
+CMD ["sh", "-c", "echo 'Qt 5.15.17 for Linux and Windows installed in /opt/qt/' && ls -la /opt/qt/ || echo 'Some builds may have failed'"]

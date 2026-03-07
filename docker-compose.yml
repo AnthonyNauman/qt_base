@@ -1,0 +1,39 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  qt-base:
+    build:
+      context: .
+      dockerfile: Dockerfile.qt-base
+    image: qt-base:5.15.17
+    container_name: qt-base-builder
+    command: /bin/bash
+    networks:
+      - qt-network
+
+  qt-app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        - QT_BASE_IMAGE=qt-base:5.15.17
+    image: qt-app:latest
+    container_name: qt-app
+    depends_on:
+      qt-base:
+        condition: service_completed_successfully
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    volumes:
+      - ./app:/app
+    user: "1000:1000"
+    networks:
+      - qt-network
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+networks:
+  qt-network:
+    driver: bridge

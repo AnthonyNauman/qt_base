@@ -1,0 +1,61 @@
+{
+    "name": "Qt Dev Container",
+    "build": {
+        "dockerfile": "Dockerfile.vscode",
+        "context": "."
+    },
+    "features": {},
+    "containerEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "QT_LINUX_DIR": "/opt/qt/linux/5.15.17",
+        "QT_WINDOWS_DIR": "/opt/qt/windows/5.15.17"
+    },
+    "mounts": [
+        // {
+        //     "source": "/media/data/dev_container/builds",
+        //     "target": "/home/ubuntu/vscode_builds",
+        //     "type": "bind"
+        // },
+        {
+            "source": "/run",
+            "target": "/run",
+            "type": "bind"
+        }
+    ],
+    "remoteUser": "ubuntu",
+    "containerUser": "ubuntu",
+    "runArgs": [
+        "--net=host",
+        "-e", "DISPLAY=${env:DISPLAY}",
+        "-v", "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+    ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "cmake.buildDirectory": "/home/ubuntu/vscode_builds/${workspaceFolderBasename}",
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "bash",
+                        "args": ["-l"]
+                    }
+                },
+                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+                "C_Cpp.default.compileCommands": "${workspaceFolder}/app/build/linux/compile_commands.json",
+                "C_Cpp.default.cppStandard": "c++17",
+                "C_Cpp.default.cStandard": "c11",
+                "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+                "C_Cpp.clang_format_style": "file",
+                "C_Cpp.autocomplete": "default",
+                "C_Cpp.errorSquiggles": "enabled"
+            },
+            "extensions": [
+                "ms-vscode.cpptools-extension-pack",
+                "ms-vscode.cpptools",
+                "xaver.clang-format",
+                "twxs.cmake",
+                "eamodio.gitlens"
+            ]
+        }
+    }
+}
