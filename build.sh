@@ -63,7 +63,7 @@ if [ $IN_DEVCONTAINER -eq 0 ]; then
         cmake -S /app -B ${PLATFORM} -DCMAKE_INSTALL_PREFIX=/app/install/${PLATFORM} \
               -DCMAKE_TOOLCHAIN_FILE=/app/toolchain/${PLATFORM}.cmake \
               ..
-        cmake --build ${PLATFORM} --target install -j\$(nproc)"
+        cmake --build ${PLATFORM} --target install --config Release -j\$(nproc)"
 else
     echo "Running inside devcontainer - executing build directly..."
     
@@ -86,7 +86,7 @@ else
           ..
     
     echo "Building for ${PLATFORM}..."
-    cmake --build ${PLATFORM} --target install -j$(nproc)
+    cmake --build ${PLATFORM} --target install --config Release -j$(nproc)
     
     echo "Build completed!"
 fi
