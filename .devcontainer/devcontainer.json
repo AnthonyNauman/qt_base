@@ -50,8 +50,8 @@
                 "C_Cpp.errorSquiggles": "enabled"
             },
             "extensions": [
+                "theqtcompany.qt-cpp-pack",
                 "ms-vscode.cpptools-extension-pack",
-                "ms-vscode.cpptools",
                 "xaver.clang-format",
                 "twxs.cmake",
                 "eamodio.gitlens"
