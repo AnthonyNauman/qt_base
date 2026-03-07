@@ -7,6 +7,9 @@
 .dockerignore
 .dockerenv
 
+# User local files
+.user/*
+
 # Build directories
 build/
 build*/
