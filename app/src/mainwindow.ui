@@ -41,7 +41,7 @@ border-top-right-radius: 12px;
         <number>0</number>
        </property>
        <property name="leftMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="topMargin">
         <number>0</number>
@@ -55,6 +55,28 @@ border-top-right-radius: 12px;
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
+            <widget class="QLabel" name="iconLabel">
+            <property name="minimumSize">
+            <size>
+                  <width>25</width>
+                  <height>25</height>
+            </size>
+            </property>
+            <property name="maximumSize">
+            <size>
+                  <width>25</width>
+                  <height>25</height>
+            </size>
+            </property>
+            <property name="pixmap">
+                  <pixmap>:/icons/app-icon</pixmap>
+            </property>
+            <property name="scaledContents">
+                  <bool>true</bool>
+            </property>
+            </widget>
+            </item>
+         <item>
           <widget class="QLabel" name="labelTitleText">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -63,7 +85,7 @@ border-top-right-radius: 12px;
             </sizepolicy>
            </property>
            <property name="styleSheet">
-            <string notr="true">font-size: 14px; font-weight: 500; color: #333333; padding-left: 10px;</string>
+            <string notr="true">font-size: 18px; font-weight: 500; color: #333333; padding-left: 5px;</string>
            </property>
            <property name="text">
             <string>AppName</string>
@@ -233,6 +255,8 @@ QPushButton#btnClose:hover {
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="../res/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
