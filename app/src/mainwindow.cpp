@@ -19,21 +19,21 @@ MainWindow::~MainWindow()
     delete _ui;
 }
 
-void MainWindow::onBtnMinClicked()
+void MainWindow::on_btnMin_clicked()
 {
     showMinimized();
 }
-void MainWindow::onBtnMaxClicked()
+void MainWindow::on_btnMax_clicked()
 {
     if (isMaximized()) showNormal();
     else showMaximized();
 }
-void MainWindow::onBtnCloseClicked()
+void MainWindow::on_btnClose_clicked()
 {
     close();
 }
 
-void MainWindow::onBthFullClicked()
+void MainWindow::on_bthFull_clicked()
 {
     if (isFullScreen()) showNormal();
     else showFullScreen();

@@ -156,6 +156,55 @@ signals:
 protected:
     void resizeEvent(QResizeEvent* event);
 };
+#else
+class CFramelessWindow : public QMainWindow
+{
+    Q_OBJECT
+public:
+    explicit CFramelessWindow(QWidget* parent = nullptr);
+    void setResizeable(bool resizeable = true);
+    bool isResizeable() const { return m_bResizeable; }
+    void setResizeableAreaWidth(int width = 5);
+    void setTitleBar(QWidget* titlebar);
+    void addIgnoreWidget(QWidget* widget);
+
+    void setContentsMargins(const QMargins& margins);
+    void setContentsMargins(int left, int top, int right, int bottom);
+    QMargins contentsMargins() const;
+    QRect contentsRect() const;
+    void getContentsMargins(int* left, int* top, int* right, int* bottom) const;
+
+public slots:
+    void showFullScreen();
+
+protected:
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+
+private slots:
+    void onTitleBarDestroyed();
+
+private:
+    QWidget* m_titlebar;
+    QList<QWidget*> m_whiteList;
+    int m_borderWidth;
+    bool m_bResizeable;
+    bool m_bJustMaximized;
+
+    QMargins m_margins;
+    QMargins m_frames;
+    enum ResizeMode { ResizeNone,
+        ResizeLeft,
+        ResizeRight,
+        ResizeTop,
+        ResizeBottom,
+        ResizeTopLeft,
+        ResizeTopRight,
+        ResizeBottomLeft,
+        ResizeBottomRight };
+    ResizeMode m_resizeMode;
+};
 #endif
 
 #endif // CFRAMELESSWINDOW_H

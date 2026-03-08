@@ -57,7 +57,7 @@ if [ $IN_DEVCONTAINER -eq 0 ]; then
         qt-app:${PLATFORM} \
         /bin/bash -c "
         if [[ ${CLEAN} == 1 ]]; then 
-            rm -rf /app/build /app/install /app/artifacts
+            rm -rf /app/build/${PLATFORM} /app/install/${PLATFORM} /app/artifacts/${PLATFORM}
         fi
         mkdir -p /app/build /app/install /app/artifacts && cd /app/build &&
         cmake -S /app -B ${PLATFORM} -DCMAKE_INSTALL_PREFIX=/app/install/${PLATFORM} \
@@ -72,7 +72,7 @@ else
     
     if [[ ${CLEAN} == 1 ]]; then 
         echo "Cleaning build directories..."
-        rm -rf ${APP_DIR}/build ${APP_DIR}/install ${APP_DIR}/artifacts
+        rm -rf ${APP_DIR}/build/${PLATFORM} ${APP_DIR}/install/${PLATFORM} ${APP_DIR}/artifacts/${PLATFORM}
     fi
     
     mkdir -p ${APP_DIR}/build ${APP_DIR}/install ${APP_DIR}/artifacts

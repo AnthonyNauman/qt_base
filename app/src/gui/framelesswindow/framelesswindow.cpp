@@ -2,8 +2,8 @@
 #include <QApplication>
 #include <QPoint>
 #include <QSize>
-#ifdef Q_OS_WIN
 
+#ifdef Q_OS_WIN
 #include <windows.h>
 // #include <WinUser.h> // Fix Build errors
 #include <dwmapi.h>
@@ -13,6 +13,10 @@
 // #include <GdiPlusColor.h> // Fix Build errors
 #pragma comment(lib, "Dwmapi.lib") // Adds missing library, fixes error LNK2019: unresolved external symbol __imp__DwmExtendFrameIntoClientArea
 #pragma comment(lib, "user32.lib")
+#else
+#include <QWindow>
+#include <QMouseEvent>
+#endif
 
 CFramelessWindow::CFramelessWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -33,8 +37,9 @@ CFramelessWindow::CFramelessWindow(QWidget* parent)
 
 void CFramelessWindow::setResizeable(bool resizeable)
 {
-    bool visible = isVisible();
     m_bResizeable = resizeable;
+#ifdef Q_OS_WIN
+    bool visible = isVisible();
     if (m_bResizeable) {
         setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
         //        setWindowFlag(Qt::WindowMaximizeButtonHint);
@@ -62,6 +67,10 @@ void CFramelessWindow::setResizeable(bool resizeable)
     DwmExtendFrameIntoClientArea(HWND(winId()), &shadow);
 
     setVisible(visible);
+#else
+    // On Linux we rely on Qt's window flags only; startSystemResize/Move handle the rest.
+    // No extra system calls needed.
+#endif
 }
 
 void CFramelessWindow::setResizeableAreaWidth(int width)
@@ -95,6 +104,7 @@ void CFramelessWindow::addIgnoreWidget(QWidget* widget)
     m_whiteList.append(widget);
 }
 
+#ifdef Q_OS_WIN
 bool CFramelessWindow::nativeEvent(const QByteArray& eventType, void* message, long* result)
 {
 // Workaround for known bug -> check Qt forum : https://forum.qt.io/topic/93141/qtablewidget-itemselectionchanged/13
@@ -222,15 +232,159 @@ bool CFramelessWindow::nativeEvent(const QByteArray& eventType, void* message, l
         return QMainWindow::nativeEvent(eventType, message, result);
     }
 }
+#endif // Q_OS_WIN
+
+#ifndef Q_OS_WIN
+// Linux (and other non-Windows) implementation using QWindow::startSystemResize/Move
+void CFramelessWindow::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton && !isMaximized() && m_bResizeable) {
+        // Determine resize mode based on cursor position
+        QPoint globalPos = event->globalPos();
+        QRect geo = geometry();
+        int x = globalPos.x() - geo.x();
+        int y = globalPos.y() - geo.y();
+
+        bool left = x < m_borderWidth;
+        bool right = x > geo.width() - m_borderWidth;
+        bool top = y < m_borderWidth;
+        bool bottom = y > geo.height() - m_borderWidth;
+
+        if (top && left) {
+            m_resizeMode = ResizeTopLeft;
+        } else if (top && right) {
+            m_resizeMode = ResizeTopRight;
+        } else if (bottom && left) {
+            m_resizeMode = ResizeBottomLeft;
+        } else if (bottom && right) {
+            m_resizeMode = ResizeBottomRight;
+        } else if (left) {
+            m_resizeMode = ResizeLeft;
+        } else if (right) {
+            m_resizeMode = ResizeRight;
+        } else if (top) {
+            m_resizeMode = ResizeTop;
+        } else if (bottom) {
+            m_resizeMode = ResizeBottom;
+        }
+
+        if (m_resizeMode != ResizeNone) {
+            event->accept();
+            return; // We'll start resize in mouseMoveEvent or release? Actually we should start immediately.
+        }
+    }
+
+    // If not resize, check for titlebar drag
+    if (event->button() == Qt::LeftButton && m_titlebar) {
+        QPoint pos = m_titlebar->mapFromGlobal(event->globalPos());
+        if (m_titlebar->rect().contains(pos)) {
+            QWidget* child = m_titlebar->childAt(pos);
+            if (!child || m_whiteList.contains(child)) {
+                // Start system move
+                if (windowHandle()) {
+                    windowHandle()->startSystemMove();
+                    event->accept();
+                    return;
+                }
+            }
+        }
+    }
+
+    QMainWindow::mousePressEvent(event);
+}
+
+void CFramelessWindow::mouseMoveEvent(QMouseEvent* event)
+{
+    if (m_resizeMode != ResizeNone && windowHandle()) {
+        // Start system resize according to mode
+        Qt::Edges edges;
+        switch (m_resizeMode) {
+        case ResizeLeft:
+            edges = Qt::LeftEdge;
+            break;
+        case ResizeRight:
+            edges = Qt::RightEdge;
+            break;
+        case ResizeTop:
+            edges = Qt::TopEdge;
+            break;
+        case ResizeBottom:
+            edges = Qt::BottomEdge;
+            break;
+        case ResizeTopLeft:
+            edges = Qt::TopEdge | Qt::LeftEdge;
+            break;
+        case ResizeTopRight:
+            edges = Qt::TopEdge | Qt::RightEdge;
+            break;
+        case ResizeBottomLeft:
+            edges = Qt::BottomEdge | Qt::LeftEdge;
+            break;
+        case ResizeBottomRight:
+            edges = Qt::BottomEdge | Qt::RightEdge;
+            break;
+        default:
+            edges = Qt::Edges();
+            break;
+        }
+        windowHandle()->startSystemResize(edges);
+        m_resizeMode = ResizeNone; // Reset after starting
+        event->accept();
+        return;
+    }
+
+    // Update cursor shape when over resize areas
+    if (!isMaximized() && m_bResizeable) {
+        QPoint globalPos = event->globalPos();
+        QRect geo = geometry();
+        int x = globalPos.x() - geo.x();
+        int y = globalPos.y() - geo.y();
+
+        bool left = x < m_borderWidth;
+        bool right = x > geo.width() - m_borderWidth;
+        bool top = y < m_borderWidth;
+        bool bottom = y > geo.height() - m_borderWidth;
+
+        if (top && left) setCursor(Qt::SizeFDiagCursor);
+        else if (top && right) setCursor(Qt::SizeBDiagCursor);
+        else if (bottom && left) setCursor(Qt::SizeBDiagCursor);
+        else if (bottom && right) setCursor(Qt::SizeFDiagCursor);
+        else if (left || right) setCursor(Qt::SizeHorCursor);
+        else if (top || bottom) setCursor(Qt::SizeVerCursor);
+        else setCursor(Qt::ArrowCursor);
+    } else {
+        setCursor(Qt::ArrowCursor);
+    }
+
+    QMainWindow::mouseMoveEvent(event);
+}
+
+void CFramelessWindow::mouseReleaseEvent(QMouseEvent* event)
+{
+    m_resizeMode = ResizeNone;
+    QMainWindow::mouseReleaseEvent(event);
+}
+#endif // !Q_OS_WIN
 
 void CFramelessWindow::setContentsMargins(const QMargins& margins)
 {
+#ifdef Q_OS_WIN
     QMainWindow::setContentsMargins(margins + m_frames);
+#else
+    QMainWindow::setContentsMargins(margins);
+#endif
     m_margins = margins;
 }
 void CFramelessWindow::setContentsMargins(int left, int top, int right, int bottom)
 {
-    QMainWindow::setContentsMargins(left + m_frames.left(), top + m_frames.top(), right + m_frames.right(), bottom + m_frames.bottom());
+#ifdef Q_OS_WIN
+    QMainWindow::setContentsMargins(left + m_frames.left(),
+        top + m_frames.top(),
+        right + m_frames.right(),
+        bottom + m_frames.bottom());
+#else
+    QMainWindow::setContentsMargins(left, top, right, bottom);
+#endif
     m_margins.setLeft(left);
     m_margins.setTop(top);
     m_margins.setRight(right);
@@ -239,7 +393,9 @@ void CFramelessWindow::setContentsMargins(int left, int top, int right, int bott
 QMargins CFramelessWindow::contentsMargins() const
 {
     QMargins margins = QMainWindow::contentsMargins();
+#ifdef Q_OS_WIN
     margins -= m_frames;
+#endif
     return margins;
 }
 void CFramelessWindow::getContentsMargins(int* left, int* top, int* right, int* bottom) const
@@ -247,31 +403,36 @@ void CFramelessWindow::getContentsMargins(int* left, int* top, int* right, int* 
     QMainWindow::getContentsMargins(left, top, right, bottom);
     if (!(left && top && right && bottom))
         return;
+#ifdef Q_OS_WIN
     if (isMaximized()) {
         *left -= m_frames.left();
         *top -= m_frames.top();
         *right -= m_frames.right();
         *bottom -= m_frames.bottom();
     }
+#endif
 }
 QRect CFramelessWindow::contentsRect() const
 {
     QRect rect = QMainWindow::contentsRect();
+#ifdef Q_OS_WIN
     int width = rect.width();
     int height = rect.height();
     rect.setLeft(rect.left() - m_frames.left());
     rect.setTop(rect.top() - m_frames.top());
     rect.setWidth(width);
     rect.setHeight(height);
+#endif
     return rect;
 }
+
 void CFramelessWindow::showFullScreen()
 {
+#ifdef Q_OS_WIN
     if (isMaximized()) {
         QMainWindow::setContentsMargins(m_margins);
         m_frames = QMargins();
     }
+#endif
     QMainWindow::showFullScreen();
 }
-
-#endif // Q_OS_WIN

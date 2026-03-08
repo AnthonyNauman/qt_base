@@ -22,6 +22,7 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 add_subdirectory(${SOURCE_DIR}/gui ${CMAKE_BINARY_DIR}/gui)
 
+
 set(SOURCES
     src/main.cpp
     src/mainwindow.cpp

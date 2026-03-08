@@ -16,10 +16,10 @@ public:
     ~MainWindow();
 
 private slots:
-    void onBtnMinClicked();
-    void onBtnMaxClicked();
-    void onBtnCloseClicked();
-    void onBthFullClicked();
+    void on_btnMin_clicked();
+    void on_btnMax_clicked();
+    void on_btnClose_clicked();
+    void on_bthFull_clicked();
 
 private:
     Ui::MainWindow* _ui;
