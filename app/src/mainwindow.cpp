@@ -2,9 +2,9 @@
 #include "ui_mainwindow.h"
 #include <QRect>
 
-MainWindow::MainWindow(QWidget *parent) 
-: CFramelessWindow(parent)
-, _ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget* parent)
+    : CFramelessWindow(parent)
+    , _ui(new Ui::MainWindow)
 {
     _ui->setupUi(this);
 #ifdef Q_OS_WIN
@@ -19,21 +19,21 @@ MainWindow::~MainWindow()
     delete _ui;
 }
 
-void MainWindow::on_btnMin_clicked()
+void MainWindow::onBtnMinClicked()
 {
     showMinimized();
 }
-void MainWindow::on_btnMax_clicked()
+void MainWindow::onBtnMaxClicked()
 {
     if (isMaximized()) showNormal();
     else showMaximized();
 }
-void MainWindow::on_btnClose_clicked()
+void MainWindow::onBtnCloseClicked()
 {
     close();
 }
 
-void MainWindow::on_bthFull_clicked()
+void MainWindow::onBthFullClicked()
 {
     if (isFullScreen()) showNormal();
     else showFullScreen();

@@ -1,0 +1,19 @@
+BasedOnStyle: webkit
+IndentWidth: 4
+BreakBeforeBraces: Custom
+AlwaysBreakAfterDefinitionReturnType: None
+BraceWrapping:
+    AfterClass: true
+    AfterStruct: true
+    AfterFunction: true
+    AfterControlStatement: Never
+    AfterNamespace: false
+    AfterEnum: false
+    BeforeElse: false
+    BeforeCatch: false
+
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: All
+
+SortIncludes: false

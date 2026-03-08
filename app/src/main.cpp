@@ -6,7 +6,7 @@
 #include <windows.h>
 #endif
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 #ifdef Q_OS_WIN
     FreeConsole();
@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     QIcon appIcon(":/icons/app-icon");
-    
+
     if (appIcon.isNull()) {
         appIcon = QIcon(":/icons/app-icon");
     }
